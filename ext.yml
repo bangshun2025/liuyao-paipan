@@ -1,0 +1,11 @@
+id: liuyao-paipan
+name: 六爻排盘
+description: 六爻测事排盘 · 京房纳甲 · 八步断事流程 / 四层判断框架 / 宫位趋势 / 转太极
+version: "0.2.35"
+author: 邦顺
+origin: self
+# 入口统一收进左栏「生命排盘」（bazi-paipan launcher 的卡片）。
+# 本容器不注册独立侧栏面板 —— 避免左栏多出一个与「生命排盘」同级的图标。
+# standalone 页面由 api 路由提供。
+contributes:
+  api: api/handler.rb

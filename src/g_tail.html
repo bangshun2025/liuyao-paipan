@@ -1,0 +1,21 @@
+
+/* ---------- 弹窗事件：卦义 / 关系模式 ---------- */
+document.addEventListener("click", function (e) {
+  var t = e.target;
+  while (t && t !== document) {
+    if (t.classList && t.classList.contains("kv-hit")) { ylOpenGua(t.getAttribute("data-gua")); return; }
+    if (t.classList && t.classList.contains("mode-hit")) { ylOpenMode(t.getAttribute("data-mode")); return; }
+    if (t.classList && t.classList.contains("cb-link")) { cbOpen(t.getAttribute("data-k")); return; }
+    if (t.classList && t.classList.contains("ah-link")) { ahOpen(t.getAttribute("data-ah"), t.getAttribute("data-p")); return; }
+    t = t.parentNode;
+  }
+});
+$("yl-x").onclick = function () { $("yl-mask").hidden = true; };
+$("yl-mask").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") $("yl-mask").hidden = true; });
+
+/* ---------- 启动 ---------- */
+init();
+</script>
+</body>
+</html>

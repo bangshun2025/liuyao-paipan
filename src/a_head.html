@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命算法 · 六爻排盘 · 测事体系</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --card:#ffffff; --ink:#242220; --ink2:#8c8880; --line:#e6e3db;
+    --red:#c0392b; --blue:#2a6fd6; --green:#1f8a4c; --gold:#b8860b; --purple:#7a3f9d;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); min-height:100vh; padding:12px 12px 40px; line-height:1.6;
+  }
+  .wrap { max-width:1440px; margin:0 auto; padding:0 20px; }
+  header.app { display:flex; align-items:center; justify-content:space-between; padding:6px 2px 14px; }
+  header.app .title { font-family:"Songti SC","SimSun",serif; font-size:19px; font-weight:600; letter-spacing:.1em; }
+  header.app .sub { font-size:12px; color:var(--ink2); margin-top:2px; }
+  .brand-logo { height:34px; opacity:.9; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+  /* 输入区 */
+  .qz-title { font-size:13.5px; font-weight:600; margin-bottom:10px; }
+  .qz-title .dim { font-weight:400; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .row label { font-size:12px; color:var(--ink2); white-space:nowrap; }
+  .row input[type=text] { flex:1; min-width:240px; }
+  input, select { font-family:inherit; font-size:14px; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 8px; background:#fff; }
+  input:focus, select:focus { outline:2px solid rgba(42,111,214,.2); border-color:var(--blue); }
+  .t-in { width:74px; text-align:center; }
+  .t-unit { font-size:12px; color:var(--ink2); }
+  .t-in.y { width:88px; }
+  .btn { font-family:inherit; font-size:13px; font-weight:500; padding:7px 16px; border-radius:8px; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); }
+  .btn:hover { background:#f1efe9; }
+  .btn.primary { background:var(--red); border-color:var(--red); color:#fff; }
+  .btn.primary:hover { background:#a93226; }
+  .err { color:var(--red); font-size:12px; min-height:16px; }
+  .pane { border-top:1px dashed var(--line); padding-top:12px; margin-top:4px; }
+  .toss-auto { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:12px; background:#fbfaf7; }
+  .ta-head { font-size:12px; color:var(--ink2); margin-bottom:8px; }
+  .ta-btns { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .ta-btn { font-family:inherit; font-size:12px; padding:5px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink2); cursor:pointer; }
+  .gua-dd { position:relative; display:inline-block; }
+  .gua-dd-btn { min-width:120px; text-align:left; font-size:12px; padding:5px 10px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
+  .gua-dd-btn:after { content:"▾"; float:right; color:var(--ink2); margin-left:6px; }
+  .gua-dd-panel { position:absolute; top:calc(100% + 2px); left:0; z-index:60; width:200px; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.14); padding:6px; }
+  .gua-dd-panel input { width:100%; box-sizing:border-box; font-size:12px; padding:4px 8px; margin-bottom:4px; }
+  .gua-dd-list { max-height:224px; overflow-y:auto; }
+  .gua-dd-item { font-size:12.5px; padding:4px 8px; border-radius:6px; cursor:pointer; color:var(--ink); }
+  .gua-dd-item:hover { background:#f2f6fc; }
+  .ta-btn.primary { border-color:var(--red); color:var(--red); font-weight:600; background:#fdf3f2; }
+  .ta-btn:disabled { opacity:.45; cursor:default; }
+  .toss-auto.dual { border-style:dashed; border-color:var(--red); background:#fffdfb; }
+  .dual-line { font-size:12px; color:var(--ink); line-height:1.7; }
+  .dual-line b { color:var(--red); }
+  /* 爻符 */
+  .glyph { display:inline-flex; gap:7px; width:40px; vertical-align:middle; flex:0 0 auto; }
+  .glyph i { display:block; height:5px; background:currentColor; border-radius:1px; flex:1; }
+  .glyph.yang i:last-child { display:none; }
+  .glyph.yang i:first-child { flex:0 0 100%; }
+  .glyph.mv i { background:var(--red); }
+  /* 盘面（整合式：元信息 → 整卦表 → 半卦 → 六爻表） */
+  .meta-strip { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12.5px; color:var(--ink2); margin-bottom:8px; align-items:center; }
+  .meta-strip b { color:var(--ink); font-weight:600; }
+  .sz-cell { display:flex; align-items:center; gap:8px; }
+  .sizhu { border-collapse:collapse; font-size:11.5px; line-height:1.5; }
+  .sizhu th, .sizhu td { border:1px solid var(--line); padding:1px 8px; text-align:center; font-weight:400; }
+  .sizhu thead th, .sizhu tbody th { color:var(--ink2); font-weight:500; background:#fbfaf7; }
+  .sizhu td { color:var(--ink); }
+  /* 整卦/半卦图形版（v0.1.40）：卦象爻线图卡＋属性小字键值（参考奇门宫格小字语言）
+     v0.1.42：整卦块与半卦卡共用同一「本｜模式｜变」三列模板，卦象与属性跨块上下对齐 */
+  .gz-g { display:grid; grid-template-columns:1fr 110px 1fr; column-gap:10px; align-items:stretch; margin:2px 0 10px; }
+  .duo { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 20px; align-items:start; margin-top:2px; }
+  .duo-l, .duo-r { min-width:0; }
+  .duo-hd { font-size:12px; font-weight:700; color:var(--ink2); letter-spacing:.06em; margin:2px 0 6px; }
+  .duo-r .duo-hd { margin-top:0; }
+  @media (max-width:1180px) {
+    .duo { grid-template-columns:1fr; }
+    .duo-r .duo-hd { margin-top:10px; }
+  }
+  /* 整卦成败分析两栏（v0.1.67）：左＝整卦图形块（左移），右＝成败分析面板（四项输出＋意愿） */
+  .cbz { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 20px; align-items:start; }
+  .cbz-l, .cbz-r { min-width:0; }
+  .cbz-hd { border-bottom:1px solid var(--line); padding-bottom:4px; }
+  @media (max-width:1180px) {
+    .cbz { grid-template-columns:1fr; }
+    .cbz-r { margin-top:10px; }
+  }
+  .cb-panel { border:1px solid var(--line); border-radius:10px; background:#fcfbf8; padding:2px 12px; font-size:12.5px; }
+  .cb-row { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:8px; padding:7px 0; border-bottom:1px dashed #e7e2d6; }
+  .cb-row:last-of-type { border-bottom:none; }
+  .cb-row i { font-style:normal; color:var(--ink2); font-size:11px; width:66px; flex-shrink:0; }
+  .cb-row b { font-weight:700; }
+  .cb-row span { font-size:12px; }
+  .cb-row em { font-style:normal; flex-basis:100%; color:var(--ink2); font-size:11px; margin-top:2px; }
+  table.cb-mini { width:100%; table-layout:fixed; border-collapse:collapse; font-size:11.5px; margin:4px 0 6px; }
+  details.cb-fold { margin:4px 0 6px; }
+  details.cb-fold > summary { list-style:none; cursor:pointer; background:#faf8f2; border:1px solid #eee9de; padding:5px 10px; font-size:11.5px; color:var(--ink2); font-weight:500; }
+  details.cb-fold > summary::-webkit-details-marker { display:none; }
+  details.cb-fold > summary::before { content:"▸ "; color:var(--ink3, #999); }
+  details.cb-fold[open] > summary::before { content:"▾ "; }
+  details.cb-fold > summary .dim { font-weight:400; }
+  details.cb-fold > table.cb-mini { margin:0; }
+  table.cb-mini th, table.cb-mini td { border:1px solid #eee9de; padding:4px 8px; text-align:left; vertical-align:top; line-height:1.5; }
+  table.cb-mini th { background:#faf8f2; color:var(--ink2); font-weight:500; white-space:nowrap; }
+  table.cb-mini th:nth-child(1) { width:66px; }
+  table.cb-mini th:nth-child(2) { width:calc((100% - 66px)/2); }
+  .sf-tag { display:inline-block; font-size:10px; line-height:1; padding:2px 4px; border-radius:4px; margin-right:4px; vertical-align:1px; font-style:normal; }
+  .sf-wo { background:#e8f0e8; color:#3a6b3a; }
+  .sf-ta { background:#f0e8e8; color:#8a4a4a; }
+  .sf-stack { flex:1; min-width:0; }
+  .sf-stack > b, .sf-stack > span, .sf-line { display:block; }
+  .sf-stack > span, .sf-line + .sf-line { margin-top:3px; }
+  .sf-mat { flex:1; min-width:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:3px 8px; align-items:baseline; }
+  .sf-mat em { font-style:normal; font-size:10px; color:var(--ink2); white-space:nowrap; }
+  .sf-mat b, .sf-mat > span { font-size:12px; }
+  .cb-off { border:1px solid var(--line); border-radius:10px; background:#fcfbf8; padding:10px 12px; font-size:12.5px; }
+  .gz-cell { border:1px solid var(--line); border-radius:10px; padding:8px 0 10px; background:#fcfbf8; border-top:3px solid var(--red); text-align:center; }
+  .gz-cell .gz-name { text-align:center; font-family:"Songti SC","SimSun",serif; font-size:17px; font-weight:700; letter-spacing:.06em; margin-top:7px; }
+  .gz-cell .gz-gong { text-align:center; font-size:11px; color:var(--ink2); margin:2px 0 7px; }
+  .gz-mid { grid-column:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; font-size:12px; }
+  .gz-arrow { font-size:20px; line-height:1; color:#c9c3b8; }
+  .gf { display:inline-flex; flex-direction:column; gap:4px; }
+  .gf-row { position:relative; display:flex; align-items:center; justify-content:center; }
+  .gf-y { display:block; width:46px; height:6px; border-radius:2px; background:#57524a; }
+  .gf-y.yin { background:linear-gradient(90deg,#57524a 0 42%,transparent 42% 58%,#57524a 58% 100%); }
+  .gf-row.on .gf-y { background:var(--red); }
+  .gf-row.on .gf-y.yin { background:linear-gradient(90deg,var(--red) 0 42%,transparent 42% 58%,var(--red) 58% 100%); }
+  .gf-mk { position:absolute; left:calc(50% + 26px); width:11px; font-size:10.5px; font-style:normal; font-weight:700; color:var(--red); line-height:1; }
+  .kvs { display:flex; flex-direction:column; gap:1px; }
+  /* v0.1.76：属性双列改弹性等分（minmax(0,1fr)），duo/cbz 侧栏挤压时不再顶破卡片边框 */
+  .kvs.gz, .kvs.hf { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); justify-content:center; column-gap:10px; row-gap:1px; text-align:left; }
+  .kv { display:flex; align-items:baseline; font-size:10.5px; line-height:1.55; }
+  .kv i { font-style:normal; color:var(--ink2); font-size:9.5px; width:38px; flex-shrink:0; }
+  .kv b { font-weight:600; white-space:nowrap; }
+  .kv .tv { flex-shrink:0; }
+  .qigua-note { font-size:12px; color:var(--ink2); background:#faf8f3; border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin-bottom:8px; }
+  table.board { width:100%; border-collapse:collapse; table-layout:fixed; font-size:14px; margin-top:12px; }
+  table.board col.c-god { width:56px; }
+  table.board col.c-fu { width:78px; }
+  table.board .tags-wx4 b { font-weight:400; }
+  .st-pos { font-size:11.5px; font-weight:700; color:var(--red); border:1px solid var(--red); border-radius:3px; padding:1px 5px; white-space:nowrap; }
+  .rl-ar { position:relative; display:inline-block; width:64px; height:12px; margin-top:13px; }
+  .rl-ar .la { position:absolute; left:50%; top:-12px; transform:translateX(-50%); font-style:normal; font-size:10px; font-weight:600; color:var(--ink2); line-height:1; }
+  .rl-ar .ln { position:absolute; left:2px; right:2px; top:50%; height:0; border-top:1.5px solid #a89f8d; }
+  .rl-ar .ln::after { content:""; position:absolute; right:-2px; top:-4.25px; border-left:6px solid #a89f8d; border-top:3.5px solid transparent; border-bottom:3.5px solid transparent; }
+  .rl-ar.back .ln::after { right:auto; left:-2px; border-left:none; border-right:6px solid #a89f8d; }
+  .rl-ar.both .ln::before { content:""; position:absolute; left:-2px; top:-4.25px; border-right:6px solid #a89f8d; border-top:3.5px solid transparent; border-bottom:3.5px solid transparent; }
+  .hf-wrap { margin-bottom:10px; }
+  .hf-card { display:grid; grid-template-columns:1fr 110px 1fr; column-gap:10px; align-items:start; border:1px solid var(--line); border-radius:10px; padding:8px 0 10px; background:#fcfbf8; margin-bottom:8px; border-top:3px solid #d9d3c6; }
+  .hf-head { display:contents; }
+  .hf-side { display:flex; flex-direction:column; align-items:center; gap:4px; padding:0 10px; }
+  .hf-name { font-family:"Songti SC","SimSun",serif; font-size:15px; font-weight:700; display:flex; align-items:center; gap:4px; }
+  .hf-mid { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; text-align:center; font-size:12px; padding:0 6px; }
+  .hf-body { display:contents; }
+  .hf-body > .kvs.hf:first-of-type { grid-column:1; grid-row:2; }
+  .hf-body > .kvs.hf:last-of-type:not(:first-of-type) { grid-column:3; grid-row:2; }
+  .hf-card .kvs.hf { border-top:1px dashed var(--line); margin:7px 10px 0; padding-top:6px; }
+  .gz-cell .kvs { border-top:1px dashed var(--line); margin:7px 10px 0; padding-top:6px; }
+  .hf-rels { display:flex; flex-direction:column; gap:2px; margin:4px 0 0; }
+  .hf-rel { display:grid; grid-template-columns:1fr 110px 1fr; column-gap:10px; font-size:10.5px; align-items:baseline; line-height:1.6; }
+  .hf-rel .rc { display:grid; grid-template-columns:38px 1fr; margin:0 10px; }
+  .hf-rel .rc i { font-style:normal; color:var(--ink2); font-size:9.5px; }
+  .hf-rel .rc b { font-weight:600; }
+  .hf-rel .rc-r > * { grid-column:2; }
+  .tv { font-style:normal; font-weight:400; font-size:8.5px; margin-left:1px; }
+  .tv-up { color:var(--green); } .tv-down { color:var(--red); } .tv-flat { color:var(--ink); }
+  .v-good { color:var(--green); } .v-bad { color:var(--red); }
+  table.board th { font-size:11.5px; color:var(--ink2); font-weight:500; text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
+  table.board td { padding:7px 6px; border-bottom:1px solid #f1efea; vertical-align:middle; }
+  table.board tr[data-pos] { cursor:pointer; }
+  table.board tr[data-pos]:hover { background:#faf9f5; }
+  tr.r-shi td.c-ben { background:#f4f9f4; }
+  tr.r-ying td.c-ben { background:#f4f7fd; }
+  .c-ls { width:56px; color:var(--ink2); font-size:13px; }
+  .c-fu { width:110px; font-size:12.5px; color:var(--gold); }
+  .fu-line { line-height:1.5; }
+  .c-ben, .c-bian { white-space:normal; }
+  .c-bian-echo { color:var(--ink2); }
+  .c-bian-wxchg { background:#fbecec; }
+  .c-bian-echo .lq { font-weight:500; }
+  .c-ben .lq, .c-bian .lq { margin:0 6px; font-weight:600; }
+  .c-ben .gz2, .c-bian .gz2 { font-size:15px; letter-spacing:.02em; white-space:nowrap; }
+  .tags { margin-left:8px; font-size:11px; }
+  .tags-wx4 { margin-top:3px; font-size:10.5px; color:var(--ink2); letter-spacing:.3px; white-space:normal; }
+  .tag { font-style:normal; font-weight:600; padding:1px 5px; border-radius:4px; margin-right:3px; background:#f0eee9; color:var(--ink2); }
+  .tag.wxx { background:#fff; border:1px solid #e5e2db; padding:0 5px; }
+  .tag.shi { background:#e4f1e4; color:var(--green); }
+  .tag.ying { background:#e4ecf9; color:var(--blue); }
+  .tag.dong { background:#fde8e6; color:var(--red); }
+  .tag.an { background:#fdf3e0; color:var(--gold); }
+  .tag.kong { background:#efe9f7; color:var(--purple); }
+  .tag.mkong { background:#faf7fd; color:var(--purple); }
+  .tag.mu { background:#f6e9dd; color:#9a5b1f; }
+  .tag.po { background:#f7dcd8; color:#9c2b1e; }
+  .tag.shen-yuan { background:#e4f1e4; color:var(--green); }
+  .tag.shen-yong { background:#fdf1dc; color:#a8680a; box-shadow:0 0 0 2px #fff, 0 0 0 4px currentColor; }
+  .hd-ys { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .duo-l .hd-ys { margin-top:10px; }
+  .yao-sec { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 20px; align-items:start; margin-top:2px; }
+  .yao-l, .yao-r { min-width:0; }
+  .yao-l .hd-ys { margin-top:0; }
+  .yao-r textarea { width:100%; box-sizing:border-box; min-height:420px; resize:vertical; border:1px solid var(--line); border-radius:10px; background:#fbfaf7; padding:10px 12px; font-size:13.5px; line-height:1.7; color:var(--ink); font-family:inherit; }
+  .yao-r textarea:focus { outline:none; border-color:#d8d2c4; background:#fff; }
+  .note-hint { font-size:11.5px; color:var(--ink2); margin-top:6px; }
+  @media (max-width:900px) { .yao-sec { grid-template-columns:1fr; } .yao-r { margin-top:12px; } .yao-r textarea { min-height:180px; } }
+  .ys-pick { font-weight:400; letter-spacing:0; color:var(--ink2); display:inline-flex; align-items:center; gap:4px; }
+  .ys-pick select { font-size:12px; padding:1px 4px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); }
+  table.board.hl-yong .tag.shen-yong,
+  table.board.hl-yuan .tag.shen-yuan,
+  table.board.hl-ji .tag.shen-ji,
+  table.board.hl-chou .tag.shen-chou { box-shadow:0 0 0 2px #fff, 0 0 0 4px currentColor; }
+  .tag.shen-ji { background:#fde8e6; color:var(--red); }
+  .tag.shen-chou { background:#efe9f7; color:var(--purple); }
+  .tag.good { background:#e4f1e4; color:var(--green); }
+  .tag.bad2 { background:#fde8e6; color:var(--red); }
+  .tag.jing { background:#f0eee9; }
+  /* 分析区 */
+  details.sec { border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:#fff; overflow:hidden; }
+  details.sec > summary { cursor:pointer; padding:10px 14px; font-size:14px; font-weight:600; list-style:none; background:#faf9f5; }
+  details.sec > summary::-webkit-details-marker { display:none; }
+  body.src-hidden .cb-src { display:none; }
+  .p { margin-bottom:8px; }
+  .p.dim, .dim { color:var(--ink2); font-size:12.5px; }
+  .warn { color:var(--gold); font-weight:600; }
+  .bad { color:var(--red); font-weight:600; }
+  .ok, .ok b { color:var(--green); font-weight:600; }
+  .hl { color:var(--red); }
+  ul.ul { margin:4px 0 8px 18px; }
+  ul.ul li { margin-bottom:5px; }
+  ul.ul.sub { margin:4px 0 4px 16px; font-size:12.5px; color:var(--ink2); }
+  table.tbl { width:100%; border-collapse:collapse; font-size:12.5px; margin:6px 0 10px; }
+  table.tbl th { background:#faf9f5; color:var(--ink2); font-weight:500; text-align:left; padding:5px 7px; border:1px solid var(--line); }
+  table.tbl td { padding:5px 7px; border:1px solid #f1efea; vertical-align:top; }
+  .gz { font-weight:600; }
+  .wx { font-weight:600; }
+  /* 预测档案 */
+  .arc-tools { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+  .arc-empty { font-size:12.5px; color:var(--ink2); border:1px dashed var(--line); border-radius:10px; padding:14px; text-align:center; }
+  .arc-item { border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fbfaf7; cursor:pointer; }
+  .arc-item:hover { border-color:#d8d2c4; background:#fff; }
+  .arc-toggle-row { margin-bottom: 10px; }
+  .arc-head { display:grid; grid-template-columns:118px 88px minmax(0,1fr); gap:0 12px; padding:0 12px 4px; font-size:11.5px; color:var(--ink2); letter-spacing:.05em; }
+  .arc-grid { display:grid; grid-template-columns:118px 88px minmax(0,1fr); gap:0 12px; align-items:baseline; }
+  .arc-name { font-size:13px; font-weight:600; }
+  .arc-q-empty { color:var(--ink2); }
+  .arc-q { font-size:13px; cursor:text; }
+  .arc-q:hover { text-decoration:underline dotted; }
+  .arc-q-inp { width:100%; box-sizing:border-box; font-size:13px; padding:3px 8px; border:1px solid #c9c2b2; border-radius:6px; background:#fff; color:var(--ink); font-family:inherit; }
+  .arc-q-inp:focus { outline:none; border-color:#a89f8a; }
+  .arc-line1 { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+  .arc-time { font-size:12px; color:var(--ink2); font-variant-numeric:tabular-nums; }
+  .arc-gn { font-family:"Songti SC","SimSun",serif; font-size:14.5px; font-weight:600; }
+  .arc-gz { font-size:11.5px; }
+  .v-badge { font-size:11px; font-weight:600; padding:1px 7px; border-radius:8px; margin-left:auto; }
+  .v-tbd { background:#f0eee9; color:var(--ink2); }
+  .v-ok { background:#e4f1e4; color:var(--green); }
+  .v-no { background:#fde8e6; color:var(--red); }
+  .v-part { background:#fdf3e0; color:var(--gold); }
+  .arc-vdim { font-size:12px; }
+  .arc-vdim { font-size:12px; }
+  .arc-ops { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .arc-fill { margin-top:8px; }
+  .arc-fill-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .arc-fill-row label { font-size:12px; color:var(--ink2); }
+  .arc-fill-row input[type=text] { flex:1; min-width:180px; }
+  footer { text-align:center; padding:18px 0 6px; }
+  footer .f-txt { font-size:11.5px; color:var(--ink2); }
+  @media (max-width:599px) {
+    .kvs.gz, .kvs.hf { grid-template-columns:84px; }
+  }
+  @media (max-width:520px) {
+    .wrap { padding:0 10px; }
+    .gz-g { gap:6px; }
+    .gz-cell { flex-basis:150px; padding:8px 6px 6px; }
+    .gz-cell .gz-name { font-size:15px; }
+    .gz-mid { min-width:72px; }
+    .gf-y { width:38px; height:5px; }
+    .gz-g { grid-template-columns:1fr; }
+    .gz-cell, .gz-mid { grid-column:1; }
+    .gz-mid { padding:2px 0; }
+    .hf-card { column-gap:4px; grid-template-columns:auto 1fr auto; }
+    .kvs.gz, .kvs.hf { grid-template-columns:84px; }
+    .hf-rel { display:flex; gap:2px 14px; flex-wrap:wrap; }
+    .hf-rel .rc { margin:0; }
+    .hf-rel .rc-r > * { grid-column:auto; }
+    .hf-mid { font-size:11px; }
+    .hf-card .kvs.hf { margin:7px 0 0; }
+    .hf-body > .kvs.hf:first-of-type { justify-self:end; }
+    .hf-body > .kvs.hf:last-of-type:not(:first-of-type) { justify-self:start; }
+    .c-fu { width:auto; font-size:11.5px; }
+    .glyph { width:30px; }
+    .c-ben .lq, .c-bian .lq { margin:0 3px; white-space:nowrap; }
+    .c-ben .gz2, .c-bian .gz2 { white-space:nowrap; }
+    .c-ben, .c-bian { white-space:normal; }
+    .tags { margin-left:4px; }
+    .c-ben .tags, .c-bian .tags { display:block; margin-left:0; }
+    table.board { font-size:13px; }
+    table.board col.c-god { width:40px; }
+    table.board col.c-fu { width:60px; }
+    .row input[type=text] { min-width:0; }
+    .row select { min-width:0; max-width:100%; }
+  }
+  @media (max-width:360px) {
+    .gz-mid { padding:2px 0; }
+    .hf-card { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .hf-head { display:grid; grid-template-columns:auto 1fr auto; column-gap:4px; grid-column:1 / -1; grid-row:1; }
+    .hf-body > .kvs.hf:last-of-type:not(:first-of-type) { grid-column:2; }
+  }
+  /* 弹窗：卦义 / 关系模式（v0.1.58） */
+  .kv-hit, .mode-hit, .cb-link, .ah-link { cursor:pointer; border-bottom:1px dashed var(--gold); }
+  .kv-hit:hover, .mode-hit:hover, .cb-link:hover, .ah-link:hover { color:var(--gold); }
+  .cb-link .cb-src { font-size:.8em; opacity:.62; }
+  .cb-dyn { width:100%; border-collapse:collapse; font-size:12px; margin-top:2px; }
+  .cb-dyn th { width:40px; text-align:left; vertical-align:top; padding:4px 8px 4px 0; color:var(--ink2); font-weight:500; white-space:nowrap; }
+  .cb-dyn td { padding:4px 0; line-height:1.8; }
+  .yl-mask { position:fixed; inset:0; background:rgba(36,34,32,.45); z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; }
+  .yl-mask[hidden] { display:none; }
+  .yl-modal { background:var(--card); border-radius:14px; max-width:640px; width:100%; max-height:82vh; overflow-y:auto; padding:16px 20px 18px; box-shadow:0 8px 40px rgba(0,0,0,.18); }
+  .yl-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .yl-head b { font-size:15.5px; letter-spacing:.04em; }
+  .yl-x { border:none; background:none; font-size:15px; color:var(--ink2); cursor:pointer; padding:2px 6px; flex:none; }
+  .yl-x:hover { color:var(--ink); }
+  .yl-sec { margin-bottom:10px; }
+  .yl-k { font-size:11.5px; color:var(--ink2); margin-bottom:1px; letter-spacing:.06em; }
+  .yl-v { font-size:13.5px; line-height:1.75; }
+  .yl-v.classic { font-family:"Songti SC","SimSun",serif; font-size:14px; }
+  /* 属性规则弹窗表格（v0.2.24） */
+  .ah-tb { width:100%; border-collapse:collapse; font-size:12px; margin:2px 0 6px; }
+  .ah-tb th, .ah-tb td { border:1px solid var(--line); padding:3px 6px; text-align:center; line-height:1.5; }
+  .ah-tb th { background:var(--card); color:var(--ink2); font-weight:500; white-space:nowrap; }
+  .ah-tb td { min-width:34px; }
+  .ah-tb .ah-hi { background:var(--gold); color:#fff; font-weight:700; border-radius:2px; }
+  .ah-tb2 th { text-align:left; width:72px; }
+  .ah-tb2 td { text-align:left; }
+</style>
+</head>
+<body class="src-hidden">
+<div class="wrap">
+  <header class="app">
+    <div>
+      <div class="title">生命算法 · 六爻排盘</div>
+      <div class="sub">测事体系 v2.1 · 双端起卦 · 京房纳甲 · 八步断事流程 · 四层判断框架 · 只描述不下断语</div>
+    </div>
+  </header>
+
+  <section class="card" id="input-card">
+    <div class="qz-title">起卦</div>
+    <div class="row">
+      <label>所问之事</label>
+      <input type="text" id="in-q" placeholder="例：今天18:00发的那条视频，7天内播放量能否破1万？（一事一问，越具体越准）">
+    </div>
+    <div class="row">
+      <label>所求（定重心）</label>
+      <select id="sel-suqiu">
+        <option value="bian" selected>希望增加 · 求进</option>
+        <option value="wen">希望维持 · 求稳</option>
+        <option value="tui">希望减少 · 求退</option>
+      </select>
+      <label>旺衰参照</label>
+      <select id="sel-ref">
+        <option value="yue">月建（月事·默认）</option>
+        <option value="ri">日令（当日事）</option>
+        <option value="nian">年支（年事）</option>
+        <option value="shi">时支（时辰事）</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>姓名</label>
+      <input type="text" id="in-name" placeholder="起卦人姓名（可空）">
+    </div>
+    <div class="row">
+      <label>起卦时间</label>
+      <input class="t-in y" type="number" id="in-y"><span class="t-unit">年</span>
+      <input class="t-in" type="number" id="in-m"><span class="t-unit">月</span>
+      <input class="t-in" type="number" id="in-d"><span class="t-unit">日</span>
+      <input class="t-in" type="number" id="in-h"><span class="t-unit">时</span>
+      <span class="t-unit">：</span>
+      <input class="t-in" type="number" id="in-mi">
+      <button class="btn" id="btn-now" type="button">当前时间</button>
+      <span class="dim">（子时 23:00 起换日；四柱按节气与真太阳时口径）</span>
+    </div>
+    <div id="pane-toss" class="pane"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="btn-go">排盘</button>
+      <button class="btn" id="btn-reset">重置</button>
+      <button class="btn" id="btn-copy">复制盘面</button>
+      <button class="btn" id="btn-save-arc">存入档案</button>
+      <button class="btn" id="btn-src" onclick="toggleSrc(this)">显示数据源</button>
+      <span class="err" id="err"></span>
+    </div>
+  </section>
+
+  <section class="card" id="board-card" hidden></section>
+  <div class="arc-toggle-row"><button class="ta-btn" id="btn-arc-toggle">预测档案</button></div>
+  <section class="card" id="arc-card" hidden></section>
+
+  <div class="yl-mask" id="yl-mask" hidden>
+    <div class="yl-modal" role="dialog" aria-modal="true">
+      <div class="yl-head"><b id="yl-title"></b><button class="yl-x" id="yl-x" type="button">✕</button></div>
+      <div id="yl-body"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="f-txt">生命算法 · 六爻排盘</div>
+  </footer>
+</div>
+<script>
